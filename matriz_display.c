@@ -93,7 +93,7 @@ i2c_init(I2C_PORT, 400*1000);
 }
 
 void gpio_irq_handler (uint gpio, uint32_t events){
-    uint64_t current_time = to_us_since_boot(get_absolute_time());
+    uint32_t current_time = to_us_since_boot(get_absolute_time());
     if((gpio == botao_a || gpio == botao_b) && (current_time - last_time > 300000)){ //debounce em microsegundos (0.3s)
     (gpio == botao_a) ? (gpio_put(11, !gpio_get(11))), printf("Led verde\n"): (void)0; //Ligando||Desligando led verde
     (gpio == botao_b) ? (gpio_put(12, !gpio_get(12))), printf("Led Azul\n"): (void)0; //Ligando||Desligando led azul

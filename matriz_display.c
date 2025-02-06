@@ -21,6 +21,7 @@ static volatile uint64_t last_time;
 static volatile uint8_t tela = 0;
 static volatile bool atualiza_display;
 static volatile bool on_off = 0;
+static volatile bool on_off2 = 0;
 
 typedef struct pixeis {
     uint8_t R, G, B;
@@ -48,12 +49,7 @@ void botinit(){
 }
 
 bool check(){
-    if(on_off == 0){
-        printf("Desligado\n");
-    }
-    else{
-        printf("Ligado\n");
-    }
+    (on_off == 0) ? printf("Desligado\n"): printf("Ligado\n");
     return true;
 }
 
@@ -97,15 +93,13 @@ i2c_init(I2C_PORT, 400*1000);
 }
 
 void gpio_irq_handler (uint gpio, uint32_t events){
-    if(gpio == botao_a){
-        gpio_put(11, !gpio_get(11));
-        on_off = !on_off;
-        printf("Led Verde\n");
-    }
-    if(gpio == botao_b){
-        gpio_put(12, !gpio_get(12));
-        on_off = !on_off;
-        printf("Led Azul\n");
+    uint64_t current_time = to_us_since_boot(get_absolute_time());
+    if((gpio == botao_a || gpio == botao_b) && (current_time - last_time > 300000)){ //debounce em microsegundos (0.3s)
+    (gpio == botao_a) ? (gpio_put(11, !gpio_get(11))), printf("Led verde\n"): (void)0; //Ligando||Desligando led verde
+    (gpio == botao_b) ? (gpio_put(12, !gpio_get(12))), printf("Led Azul\n"): (void)0; //Ligando||Desligando led azul
+    on_off = !on_off;
+    check();
+    last_time = current_time;
     }
 }
 
@@ -120,6 +114,6 @@ gpio_set_irq_enabled_with_callback(botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_
 gpio_set_irq_enabled_with_callback(botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     while (true) {
         printf("Hello, world!\n");
-        sleep_ms(1000);
+        sleep_ms(10000);
     }
 }

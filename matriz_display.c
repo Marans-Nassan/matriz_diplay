@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
-#include "hardware.pio"
+#include "hardware/pio.h"
 #include "font.h"
 #include "ssd1306.h"
-#include "2812.pio"
+#include "ws2812.pio.h"
 
-#define botoa_a 5
+#define botao_a 5
 #define botao_b 6
 #define matriz_led 7
 #define green_led 11
@@ -16,18 +16,17 @@
 #define I2C_PORT i2c0
 #define matriz_led_pins 25
 
-
-
 uint8_t i;
 static volatile uint64_t last_time;
 static volatile uint8_t tela = 0;
 static volatile bool atualiza_display;
+static volatile bool on_off = 0;
 
 typedef struct pixeis {
-    uint8_t G, R, B
-} pixeis;
+    uint8_t R, G, B;
+}pixeis;
 
-pixeis led [matriz_led_pins];
+pixeis leds [matriz_led_pins];
 
 PIO pio;
 uint sm;
@@ -48,10 +47,44 @@ void botinit(){
     }
 }
 
-// I2C defines
-// This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
-// Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
+bool check(){
+    if(on_off == 0){
+        printf("Desligado\n");
+    }
+    else{
+        printf("Ligado\n");
+    }
+    return true;
+}
 
+void minit(uint pin){
+
+uint offset = pio_add_program(pio0, &ws2812_program);
+pio = pio0;
+
+sm = pio_claim_unused_sm(pio, false);
+    if(sm < 0){
+        pio = pio1;
+        sm = pio_claim_unused_sm(pio, true);
+    }
+
+ws2812_program_init(pio, sm, offset, pin, 800000.f);
+}
+//configuração para permitir o uso da função display. (configuração da matriz de led)
+void setled(const uint index, const uint8_t r, const uint8_t g, const uint8_t b){
+  leds[index].R = r;
+  leds[index].G = g;
+  leds[index].B = b;
+}
+//esta é a função responsável por permitir ditar qual led vai acender e apagar.
+void display(){
+    for (uint i = 0; i < matriz_led; ++i) {
+        pio_sm_put_blocking(pio, sm, leds[i].R);
+        pio_sm_put_blocking(pio, sm, leds[i].G);
+        pio_sm_put_blocking(pio, sm, leds[i].B);
+    }
+sleep_us(100); 
+}
 
 void i2cinit(){
 i2c_init(I2C_PORT, 400*1000);
@@ -63,6 +96,18 @@ i2c_init(I2C_PORT, 400*1000);
 
 }
 
+void gpio_irq_handler (uint gpio, uint32_t events){
+    if(gpio == botao_a){
+        gpio_put(11, !gpio_get(11));
+        on_off = !on_off;
+        printf("Led Verde\n");
+    }
+    if(gpio == botao_b){
+        gpio_put(12, !gpio_get(12));
+        on_off = !on_off;
+        printf("Led Azul\n");
+    }
+}
 
 int main(){
     
@@ -70,7 +115,9 @@ stdio_init_all();
 ledinit();
 botinit();
 i2cinit();
-    
+
+gpio_set_irq_enabled_with_callback(botao_a, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+gpio_set_irq_enabled_with_callback(botao_b, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     while (true) {
         printf("Hello, world!\n");
         sleep_ms(1000);

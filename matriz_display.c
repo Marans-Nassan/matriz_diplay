@@ -18,10 +18,7 @@
 
 uint8_t i;
 static volatile uint64_t last_time;
-static volatile uint8_t tela = 0;
-static volatile bool atualiza_display;
 static volatile bool on_off = 0;
-static volatile bool on_off2 = 0;
 
 typedef struct pixeis {
     uint8_t R, G, B;

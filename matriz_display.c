@@ -15,8 +15,7 @@
 #define I2C_SCL 15
 #define I2C_PORT i2c0
 #define matriz_led_pins 25
-//Criando um macro para a interrupção por questão de clareza.
-#define int_irq(gpio_pin) gpio_set_irq_enabled_with_callback(gpio_pin, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+
 uint8_t i;
 static volatile uint64_t last_time;
 static volatile uint8_t tela = 0;
@@ -85,56 +84,23 @@ void digit_complement(const uint8_t *digit_leds, uint16_t count){
     }
         display();    
 }
-
-void digito0(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 15, 19, 14, 10, 5, 9, 4, 3, 2, 1, 0};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
+//Macro para definir o que vai aparecer no display da matriz de led 5x5.
+#define digits(num, ...) \
+void digito##num() { \
+    const uint8_t digit_leds[] = { __VA_ARGS__ }; \
+    digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0])); \
 }
 
-void digito1(){
-const uint8_t digit_leds[] = {22, 17, 12, 7, 2};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito2(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 18, 12, 6, 4, 3, 2, 1, 0};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito3(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 19, 14, 13, 12, 11, 10, 9, 4, 3, 2, 1, 0};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito4(){
-const uint8_t digit_leds[] = {24, 20, 16, 18, 12, 7, 2};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito5(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 15, 14, 13, 12, 11, 10, 9, 4, 3, 2, 1, 0};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito6(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 15, 14, 13, 12, 11, 10, 9, 5, 4, 3, 2, 1, 0};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito7(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 18, 12, 6, 4};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito8(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 15, 19, 14, 13, 12, 11, 10, 5, 9, 4, 3, 2, 1, 0};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
-
-void digito9(){
-const uint8_t digit_leds[] = {24, 23, 22, 21, 20, 15, 19, 14, 13, 12, 11, 10, 9, 0};
-digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0]));
-}
+digits(0, 24, 23, 22, 21, 20, 15, 19, 14, 10, 5, 9, 4, 3, 2, 1, 0)
+digits(1, 22, 17, 12, 7, 2)
+digits(2, 24, 23, 22, 21, 20, 18, 12, 6, 4, 3, 2, 1, 0)
+digits(3, 24, 23, 22, 21, 20, 19, 14, 13, 12, 11, 10, 9, 4, 3, 2, 1, 0)
+digits(4, 24, 15, 14, 13, 12, 11, 10, 20, 19, 9, 0)
+digits(5, 24, 23, 22, 21, 20, 15, 14, 13, 12, 11, 10, 9, 4, 3, 2, 1, 0)
+digits(6, 24, 23, 22, 21, 20, 15, 14, 13, 12, 11, 10, 9, 5, 4, 3, 2, 1, 0)
+digits(7, 24, 23, 22, 21, 20, 18, 12, 6, 4)
+digits(8, 24, 23, 22, 21, 20, 15, 19, 14, 13, 12, 11, 10, 5, 9, 4, 3, 2, 1, 0)
+digits(9, 24, 23, 22, 21, 20, 15, 19, 14, 13, 12, 11, 10, 9, 0)
 
 static void (*digitos[10])() = { //função ponteiro para o que ser chamado para a matriz.
     digito0, digito1, digito2, digito3, digito4,
@@ -185,6 +151,8 @@ void gpio_irq_handler (uint gpio, uint32_t events){
     last_time = current_time;
     }
 }
+//Criando um macro para a interrupção por questão de clareza.
+#define int_irq(gpio_pin) gpio_set_irq_enabled_with_callback(gpio_pin, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
 int main(){
     

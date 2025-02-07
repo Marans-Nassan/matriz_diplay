@@ -13,7 +13,8 @@
 #define blue_led 12
 #define I2C_SDA 14
 #define I2C_SCL 15
-#define I2C_PORT i2c0
+#define I2C_PORT i2c1
+#define endereco 0x3c
 #define matriz_led_pins 25
 
 uint8_t i;
@@ -128,6 +129,18 @@ i2c_init(I2C_PORT, 400*1000);
         gpio_pull_up(i);
     }
 }
+ssd1306_t ssd;
+void oledinit(){
+    ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT);
+    ssd1306_config(&ssd);
+}
+
+void oledisplay(){
+    ssd1306_fill(&ssd, false);
+    ssd1306_send_data(&ssd);
+    ssd1306_draw_string(&ssd, "A", 58, 25);
+    ssd1306_send_data(&ssd);
+}
 
 bool check(){
     (on_off == 0) ? printf("Desligado\n"): printf("Ligado\n");
@@ -155,8 +168,9 @@ botinit();
 int_irq(botao_a);
 int_irq(botao_b);
 i2cinit();
+oledinit();
 minit(matriz_led);
-
+oledisplay();
     while (true) {
     digito_matriz();
     

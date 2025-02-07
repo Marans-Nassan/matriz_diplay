@@ -76,19 +76,15 @@ void display(){
     }
 sleep_us(100); 
 }
-
-//Parte da configuração dos símbolos.
-void digit_complement(const uint8_t *digit_leds, uint16_t count){
-    for (size_t i = 0; i < count; ++i) {
-        setled(digit_leds[i], 0, 0, 1);
-    }
-        display();    
-}
-//Macro para definir o que vai aparecer no display da matriz de led 5x5.
+//Macro para definir o que vai aparecer no display da matriz de leds.
 #define digits(num, ...) \
 void digito##num() { \
     const uint8_t digit_leds[] = { __VA_ARGS__ }; \
-    digit_complement(digit_leds, sizeof(digit_leds) / sizeof(digit_leds[0])); \
+    size_t count = sizeof(digit_leds) / sizeof(digit_leds[0]); \
+    for (size_t i = 0; i < count; ++i) { \
+        setled(digit_leds[i], 0, 1, 0); \
+    } \
+    display(); \
 }
 
 digits(0, 24, 23, 22, 21, 20, 15, 19, 14, 10, 5, 9, 4, 3, 2, 1, 0)

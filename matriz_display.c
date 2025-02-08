@@ -20,6 +20,7 @@
 uint8_t i;
 static volatile uint64_t last_time;
 static volatile bool on_off = 0;
+static volatile char entrada;
 
 typedef struct pixeis {
     uint8_t R, G, B;
@@ -107,20 +108,6 @@ void led_clear(){ // limpar o led para possibilitar a adição do próximo núme
     }
 }
 
-const void digito_matriz(){
-    led_clear();
-    char entrada;
-    scanf(" %c", &entrada);
-    if(entrada >= '0' && entrada <= '9'){
-        uint8_t indice = entrada - '0';
-        digitos[indice]();
-    }
-    else {
-        led_clear();
-        display();
-    }
-}
-
 void i2cinit(){
 i2c_init(I2C_PORT, 400*1000);
 
@@ -135,12 +122,20 @@ void oledinit(){
     ssd1306_config(&ssd);
 }
 
-void oledisplay(){
-    ssd1306_fill(&ssd, false);
+void oleddis(const char *valor){
+    ssd1306_draw_string(&ssd, valor, 58, 25);
     ssd1306_send_data(&ssd);
-    ssd1306_draw_string(&ssd, "A", 58, 25);
-    ssd1306_send_data(&ssd);
-}
+    }
+
+const void digito_matriz(){
+    led_clear();
+    uint8_t indice = entrada - '0';
+    char str[2] = { entrada, '\0' };
+    digitos[indice]();
+    display();
+    oleddis(str);
+    
+    }
 
 bool check(){
     (on_off == 0) ? printf("Desligado\n"): printf("Ligado\n");
@@ -170,9 +165,20 @@ int_irq(botao_b);
 i2cinit();
 oledinit();
 minit(matriz_led);
-oledisplay();
+ssd1306_fill, false;    
+    
     while (true) {
+    uint8_t ch = getchar_timeout_us(0);
+    scanf(" %c", &entrada);
+    if(entrada >= '0' && entrada <= '9'){
     digito_matriz();
+    }
+    else {
+        led_clear();
+        display();
+        char str[2] = { entrada, '\0' };
+        oleddis(str);
+    }
     
     }
 }

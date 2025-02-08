@@ -65,7 +65,16 @@ void oledinit(){
 }
 // configuração do que vai aparecer no Oled
 void oleddis(const char *valor){
+    ssd1306_fill(&ssd, false);
+    ssd1306_send_data(&ssd);
     ssd1306_draw_string(&ssd, valor, 58, 25);
+    ssd1306_send_data(&ssd);
+    }
+
+void rup_dis(const char *msg){
+    ssd1306_fill(&ssd, false);
+    ssd1306_send_data(&ssd);
+    ssd1306_draw_string(&ssd, msg, 0, 25);
     ssd1306_send_data(&ssd);
     }
 
@@ -108,16 +117,16 @@ void digito##num() { \
     display(); \
 }
 
-digits(0, 24, 23, 22, 21, 20, 15, 19, 14, 10, 5, 9, 4, 3, 2, 1, 0)
-digits(1, 22, 17, 12, 7, 2)
-digits(2, 24, 23, 22, 21, 20, 18, 12, 6, 4, 3, 2, 1, 0)
-digits(3, 24, 23, 22, 21, 20, 19, 14, 13, 12, 11, 10, 9, 4, 3, 2, 1, 0)
-digits(4, 24, 15, 14, 13, 12, 11, 10, 20, 19, 9, 0)
-digits(5, 24, 23, 22, 21, 20, 15, 14, 13, 12, 11, 10, 9, 4, 3, 2, 1, 0)
-digits(6, 24, 23, 22, 21, 20, 15, 14, 13, 12, 11, 10, 9, 5, 4, 3, 2, 1, 0)
-digits(7, 24, 23, 22, 21, 20, 18, 12, 6, 4)
-digits(8, 24, 23, 22, 21, 20, 15, 19, 14, 13, 12, 11, 10, 5, 9, 4, 3, 2, 1, 0)
-digits(9, 24, 23, 22, 21, 20, 15, 19, 14, 13, 12, 11, 10, 9, 0)
+digits(0, 24, 23, 22, 21, 20, 18, 15, 19, 14, 12, 10, 5, 9, 4, 6, 3, 2, 1, 0)
+digits(1, 22, 17, 12, 7, 2, 14, 13, 11, 10)
+digits(2, 14, 13, 12, 11, 10)
+digits(3, 20, 18, 12, 6, 4, 24, 0)
+digits(4, 24, 16, 12, 8, 0, 4, 6, 18, 20)
+digits(5, 23, 16, 13, 6, 3, 14, 21, 18, 11, 8, 1, 10)
+digits(6, 24, 23, 15, 14, 5, 4, 3, 21, 20, 19, 10, 9, 0, 1)
+digits(7, 23, 15, 14, 5, 3, 21, 19, 10, 9, 1)
+digits(8, 15, 16, 17, 18, 19, 5, 6, 7, 8, 9)
+digits(9, 20, 18, 12, 6, 4)
 
 static void (*digitos[10])() = { //função ponteiro para o que ser chamado para a matriz.
     digito0, digito1, digito2, digito3, digito4,
@@ -145,12 +154,26 @@ void gpio_irq_handler (uint gpio, uint32_t events){
         if(gpio == botao_a){
             gpio_put(11, !gpio_get(11)); //Alterna o estado do pino.
             on_off_a = !on_off_a; //Alterna o estado da boleana para ajudar na identificação do estado.
-            (on_off_a == 1) ? (printf("Led Verde Ligado\n")):(printf("Led Verde Desligado\n"));
+                if(on_off_a == 1){
+                    printf("Green Led On\n");
+                    rup_dis("Green Led On");
+                }
+                else {
+                    printf("Green Led Off\n");
+                    rup_dis("Green Led Off");
+                }
         }
         if(gpio == botao_b){
             gpio_put(12, !gpio_get(12)); 
             on_off_b = !on_off_b; 
-            (on_off_b == 1) ? (printf("Led Azul Ligado\n")):(printf("Led Azul Desligado\n"));
+                if(on_off_b == 1){
+                    printf("Blue Led On\n");
+                    rup_dis("Blue Led On");
+                }
+                else {
+                    printf("Blue Led Off\n");
+                    rup_dis("Blue Led Off");
+                }
         }
         last_time = current_time;
     }

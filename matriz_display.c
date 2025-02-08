@@ -19,7 +19,8 @@
 
 uint8_t i;
 static volatile uint64_t last_time;
-static volatile bool on_off = 0;
+static volatile bool on_off_a = 0;
+static volatile bool on_off_b = 0;
 static volatile char entrada;
 
 typedef struct pixeis {
@@ -46,6 +47,27 @@ void botinit(){ //inicialização dos botões.
         gpio_pull_up(i);
     }
 }
+
+void i2cinit(){ //iniciando o i2c
+i2c_init(I2C_PORT, 400*1000);
+
+    for(i = 14 ; i < 16; i++){
+        gpio_set_function(i, GPIO_FUNC_I2C);
+        gpio_pull_up(i);
+    }
+}
+ssd1306_t ssd; //Organizando as configurações do Oled junto a sua iniciação.
+void oledinit(){
+    ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT);
+    ssd1306_config(&ssd);
+    ssd1306_fill(&ssd, false);
+    ssd1306_send_data(&ssd);
+}
+// configuração do que vai aparecer no Oled
+void oleddis(const char *valor){
+    ssd1306_draw_string(&ssd, valor, 58, 25);
+    ssd1306_send_data(&ssd);
+    }
 
 void minit(uint pin){ //inicialização da matriz de led.
 
@@ -106,50 +128,31 @@ void led_clear(){ // limpar o led para possibilitar a adição do próximo núme
     for(i = 0; i < matriz_led_pins; i++){
         setled(i, 0, 0, 0);
     }
+    display();
 }
 
-void i2cinit(){
-i2c_init(I2C_PORT, 400*1000);
-
-    for(i = 14 ; i < 16; i++){
-        gpio_set_function(i, GPIO_FUNC_I2C);
-        gpio_pull_up(i);
-    }
-}
-ssd1306_t ssd;
-void oledinit(){
-    ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT);
-    ssd1306_config(&ssd);
-}
-
-void oleddis(const char *valor){
-    ssd1306_draw_string(&ssd, valor, 58, 25);
-    ssd1306_send_data(&ssd);
-    }
-
-const void digito_matriz(){
-    led_clear();
+void digito_matriz(){ //organizando o que vai ser apresentado na matriz de led e no Oled caso use números.
     uint8_t indice = entrada - '0';
-    char str[2] = { entrada, '\0' };
     digitos[indice]();
     display();
+    char str[2] = { entrada, '\0' };
     oleddis(str);
-    
-    }
-
-bool check(){
-    (on_off == 0) ? printf("Desligado\n"): printf("Ligado\n");
-    return true;
 }
 
 void gpio_irq_handler (uint gpio, uint32_t events){
     uint32_t current_time = to_us_since_boot(get_absolute_time());
     if((gpio == botao_a || gpio == botao_b) && (current_time - last_time > 300000)){ //debounce em microsegundos (0.3s)
-    (gpio == botao_a) ? (gpio_put(11, !gpio_get(11))), printf("Led verde\n"): (void)0; //Ligando||Desligando led verde
-    (gpio == botao_b) ? (gpio_put(12, !gpio_get(12))), printf("Led Azul\n"): (void)0; //Ligando||Desligando led azul
-    on_off = !on_off;
-    check();
-    last_time = current_time;
+        if(gpio == botao_a){
+            gpio_put(11, !gpio_get(11)); //Alterna o estado do pino.
+            on_off_a = !on_off_a; //Alterna o estado da boleana para ajudar na identificação do estado.
+            (on_off_a == 1) ? (printf("Led Verde Ligado\n")):(printf("Led Verde Desligado\n"));
+        }
+        if(gpio == botao_b){
+            gpio_put(12, !gpio_get(12)); 
+            on_off_b = !on_off_b; 
+            (on_off_b == 1) ? (printf("Led Azul Ligado\n")):(printf("Led Azul Desligado\n"));
+        }
+        last_time = current_time;
     }
 }
 //Criando um macro para a interrupção por questão de clareza.
@@ -164,21 +167,20 @@ int_irq(botao_a);
 int_irq(botao_b);
 i2cinit();
 oledinit();
-minit(matriz_led);
-ssd1306_fill, false;    
+minit(matriz_led);   
     
     while (true) {
     uint8_t ch = getchar_timeout_us(0);
     scanf(" %c", &entrada);
-    if(entrada >= '0' && entrada <= '9'){
-    digito_matriz();
-    }
-    else {
-        led_clear();
-        display();
-        char str[2] = { entrada, '\0' };
-        oleddis(str);
-    }
-    
+        if(entrada >= '0' && entrada <= '9'){
+            led_clear();
+            sleep_ms(1);
+            digito_matriz();
+        }
+        else {
+            led_clear();
+            char str[2] = { entrada, '\0' };
+            oleddis(str);
+        }
     }
 }

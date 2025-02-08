@@ -68,3 +68,7 @@ Desenvolvido para fins educacionais no estudo de microcontroladores e comunicaç
 ## Autor
 
 Hugo Martins Santana (TIC370101267)
+
+## Licença
+
+Creative Commons Zero v1.0 Universal
